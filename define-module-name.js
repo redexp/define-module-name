@@ -1,6 +1,6 @@
 ;(function (root) {
 
-    define.version = '1.1.0';
+    define.version = '1.2.0';
 
     root.define = define;
     root.require = require;
@@ -12,6 +12,7 @@
     define.clear = clear;
 
     require.config = function () {};
+    require.specified = specified;
 
     var modules, names;
 
@@ -56,7 +57,7 @@
             throw new Error('Invalid module name type: ' + typeof name);
         }
 
-        if (has(modules, name)) {
+        if (specified(name)) {
             throw new Error('Module already defined: ' + name);
         }
 
@@ -130,7 +131,7 @@
     }
 
     function nextName(name) {
-        if (name && has(modules, name)) {
+        if (name && specified(name)) {
             throw new Error('Module already defined: ' + name);
         }
 
@@ -140,6 +141,10 @@
     function clear() {
         modules = define.modules = {};
         names = define.names = [];
+    }
+
+    function specified(name) {
+        return has(modules, name);
     }
 
     function has(obj, field) {
