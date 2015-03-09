@@ -163,5 +163,34 @@ describe('define', function () {
         expect(d.require('test')).to.equal(1);
         expect(num).to.equal(1);
     });
+    
+    it('should throw error if already defined', function () {
+        num = 0;
+
+        d.define('test', [], function () {
+            return 1;
+        });
+
+        try {
+            d.define('test');
+        }
+        catch (e) {
+            num++;
+            expect(e.message).to.equal('Module already defined: test');
+        }
+        
+        try {
+            d.define('test', [], function () {
+                return 2;
+            });
+        }
+        catch (e) {
+            num++;
+            expect(e.message).to.equal('Module already defined: test');
+        }
+
+        expect(num).to.equal(2);
+        expect(d.require('test')).to.equal(1);
+    });
 
 });

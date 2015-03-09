@@ -1,5 +1,7 @@
 ;(function (root) {
 
+    define.version = '1.1.0';
+
     root.define = define;
     root.require = require;
 
@@ -52,6 +54,10 @@
 
         if (typeof name !== 'string') {
             throw new Error('Invalid module name type: ' + typeof name);
+        }
+
+        if (has(modules, name)) {
+            throw new Error('Module already defined: ' + name);
         }
 
         modules[name] = {
@@ -124,6 +130,10 @@
     }
 
     function nextName(name) {
+        if (name && has(modules, name)) {
+            throw new Error('Module already defined: ' + name);
+        }
+
         return name ? names.push(name) : names.shift();
     }
 
