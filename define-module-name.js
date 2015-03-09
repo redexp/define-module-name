@@ -1,6 +1,6 @@
 ;(function (root) {
 
-    define.version = '1.2.0';
+    define.version = '1.3.0';
 
     root.define = define;
     root.require = require;
@@ -121,7 +121,7 @@
 
             var result = module.callback.apply(null, module.deps.map(moduleResult));
 
-            module.result = hasModuleExports ? moduleExports.exports : result;
+            module.result = typeof result !== 'undefined' ? result : (hasModuleExports ? moduleExports.exports : result);
 
             module.called = true;
             module.pending = false;

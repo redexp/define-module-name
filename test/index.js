@@ -45,8 +45,6 @@ describe('define', function () {
             expect(req('x')).to.equal(1);
 
             e.test = 1;
-
-            return 2;
         });
 
         expect(d.require('test')).to.deep.equal({test: 1});
@@ -58,7 +56,7 @@ describe('define', function () {
         d.define('x', ['test'], function (test) {
             num++;
 
-            expect(test).to.equal(3);
+            expect(test).to.equal(2);
             return 1;
         });
 
@@ -159,9 +157,29 @@ describe('define', function () {
             m.exports = 1;
         });
 
+        d.define('x');
+
+        d.define(function (req, e, m) {
+            num++;
+
+            e.test = 2;
+
+            return 2;
+        });
+
+        d.define('y');
+
+        d.define(function (req, e, m) {
+            num++;
+
+            e.test = 3;
+        });
+
         expect(d.require('test')).to.equal(1);
         expect(d.require('test')).to.equal(1);
-        expect(num).to.equal(1);
+        expect(d.require('x')).to.equal(2);
+        expect(d.require('y')).to.deep.equal({test: 3});
+        expect(num).to.equal(3);
     });
     
     it('should throw error if already defined', function () {
