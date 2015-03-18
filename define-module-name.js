@@ -1,23 +1,34 @@
-;(function (root) {
+;(function () {
 
-    define.version = '1.3.0';
+    /** @global */
+    var window = typeof exports === 'object' ? exports : this;
 
-    root.define = define;
-    root.require = require;
+    define.version = '1.4.0';
+
+    window.define = define;
+    window.require = require;
 
     define.amd = {
         jQuery: true
     };
 
     define.clear = clear;
+    define.end = end;
+    define.timeout = 1000;
 
     require.config = function () {};
     require.specified = specified;
 
-    var modules, names;
+    var modules, names, pending;
 
     clear();
 
+    /**
+     * @global
+     * @param {String|Array|Function} name
+     * @param {Array|Function} deps
+     * @param {Function} cb
+     */
     function define(name, deps, cb) {
         if (arguments.length === 1) {
             switch (typeof name) {
@@ -68,9 +79,17 @@
             pending: false,
             result: null
         };
+
+        timeoutEnd();
     }
 
-    function require(deps, cb) {
+    /**
+     * @global
+     * @param {String|Array} deps
+     * @param {Function} cb
+     * @param {Function} [err]
+     */
+    function require(deps, cb, err) {
         if (arguments.length === 1) {
             switch (typeof deps) {
                 case 'string':
@@ -82,7 +101,29 @@
             }
         }
 
-        cb.apply(null, deps.map(moduleResult));
+        if (!end.called && !specified(deps)) {
+            pending.push({
+                cb: cb,
+                deps: deps,
+                err: err
+            });
+
+            timeoutEnd();
+
+            return;
+        }
+
+        try {
+            cb.apply(null, deps.map(moduleResult));
+        }
+        catch (e) {
+            if (err) {
+                err(e);
+            }
+            else {
+                throw e;
+            }
+        }
     }
 
     function moduleResult(name) {
@@ -93,7 +134,7 @@
                 return require;
         }
 
-        if (!has(modules, name)) {
+        if (!specified(name)) {
             throw new Error('Undefined module: ' + name);
         }
 
@@ -141,14 +182,36 @@
     function clear() {
         modules = define.modules = {};
         names = define.names = [];
+        pending = define.pending = [];
+        end.called = false;
+        clearTimeout(timeoutEnd.timer);
     }
 
-    function specified(name) {
-        return has(modules, name);
+    function specified(names) {
+        if (typeof names === 'string') {
+            return has(modules, names);
+        }
+
+        return names.every(specified);
+    }
+
+    function end() {
+        end.called = true;
+
+        pending.forEach(function (item) {
+            require(item.deps, item.cb, item.err);
+        });
+
+        pending = [];
+    }
+
+    function timeoutEnd() {
+        clearTimeout(timeoutEnd.timer);
+        timeoutEnd.timer = setTimeout(end, define.timeout);
     }
 
     function has(obj, field) {
-        return Object.prototype.hasOwnProperty.call(obj, field);
+        return obj && Object.prototype.hasOwnProperty.call(obj, field);
     }
 
-}(typeof exports === 'object' ? exports : this));
+}());

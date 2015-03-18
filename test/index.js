@@ -211,4 +211,40 @@ describe('define', function () {
         expect(d.require('test')).to.equal(1);
     });
 
+    it('should throw error if module undefined', function (done) {
+        d.require(
+            ['test'],
+            function () {
+                throw new Error('Should not be here');
+            },
+            function (err) {
+                expect(err.message).to.equal('Undefined module: test');
+                done();
+            }
+        );
+    });
+
+    it('should throw undefined module error immediately', function () {
+        try {
+            d.require('test');
+            throw new Error('Error not thrown');
+        }
+        catch (err) {
+            expect(err.message).to.equal('Undefined module: test');
+        }
+    });
+
+    it('should handle define after require', function (done) {
+        d.require(['test'], function (test) {
+            expect(test).to.equal(1);
+            done();
+        });
+
+        setTimeout(function () {
+            d.define('test', [], function () {
+                return 1;
+            });
+        }, 500);
+    });
+
 });
