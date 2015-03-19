@@ -211,17 +211,20 @@ describe('define', function () {
         expect(d.require('test')).to.equal(1);
     });
 
-    it('should throw error if module undefined', function (done) {
+    it('should throw error if module undefined', function () {
         d.require(
             ['test'],
             function () {
                 throw new Error('Should not be here');
-            },
-            function (err) {
-                expect(err.message).to.equal('Undefined module: test');
-                done();
             }
         );
+
+        try {
+            d.define.end();
+        }
+        catch (e) {
+            expect(e.message).to.equal('Undefined module: test');
+        }
     });
 
     it('should throw undefined module error immediately', function () {

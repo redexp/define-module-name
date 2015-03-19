@@ -3,7 +3,7 @@
     /** @global */
     var window = typeof exports === 'object' ? exports : this;
 
-    define.version = '1.4.0';
+    define.version = '1.5.0';
 
     window.define = define;
     window.require = require;
@@ -87,9 +87,8 @@
      * @global
      * @param {String|Array} deps
      * @param {Function} cb
-     * @param {Function} [err]
      */
-    function require(deps, cb, err) {
+    function require(deps, cb) {
         if (arguments.length === 1) {
             switch (typeof deps) {
                 case 'string':
@@ -104,8 +103,7 @@
         if (!end.called && !specified(deps)) {
             pending.push({
                 cb: cb,
-                deps: deps,
-                err: err
+                deps: deps
             });
 
             timeoutEnd();
@@ -113,17 +111,7 @@
             return;
         }
 
-        try {
-            cb.apply(null, deps.map(moduleResult));
-        }
-        catch (e) {
-            if (err) {
-                err(e);
-            }
-            else {
-                throw e;
-            }
-        }
+        cb.apply(null, deps.map(moduleResult));
     }
 
     function moduleResult(name) {
@@ -196,10 +184,12 @@
     }
 
     function end() {
+        clearTimeout(timeoutEnd.timer);
+
         end.called = true;
 
         pending.forEach(function (item) {
-            require(item.deps, item.cb, item.err);
+            require(item.deps, item.cb);
         });
 
         pending = [];
