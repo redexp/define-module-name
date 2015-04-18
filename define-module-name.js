@@ -3,7 +3,7 @@
     /** @global */
     var window = typeof exports === 'object' ? exports : this;
 
-    define.version = '1.5.0';
+    define.version = '1.6.0';
 
     window.define = define;
     window.require = require;
@@ -73,7 +73,9 @@
         }
 
         modules[name] = {
-            callback: cb,
+            callback: typeof cb === 'function' ? cb : function () {
+                return cb;
+            },
             deps: deps,
             called: false,
             pending: false,

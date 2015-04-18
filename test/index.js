@@ -250,4 +250,11 @@ describe('define', function () {
         }, 500);
     });
 
+    it('should handle cb as not function', function () {
+        var x = {};
+        d.define('test', [], x);
+
+        expect(d.require('test')).to.equal(x);
+    });
+
 });
