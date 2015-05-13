@@ -248,11 +248,22 @@ describe('define', function () {
             }
             expect(test).to.equal(1);
             expect(test2).to.equal(2);
-            done();
+        });
+
+        var y = 0;
+
+        d.require(['test', 'test2'], function (test, test2) {
+            y++;
+            if (y > 1) {
+                done(new Error('Called ' + y + ' times'));
+                return;
+            }
+            expect(test).to.equal(1);
+            expect(test2).to.equal(2);
         });
 
         setTimeout(function () {
-            d.define('test', [], function () {
+            d.define('test', ['sub-test'], function () {
                 return 1;
             });
 
@@ -260,6 +271,14 @@ describe('define', function () {
                 d.define('test2', [], function () {
                     return 2;
                 });
+
+                d.define('sub-test', [], function () {
+                    return 3;
+                });
+
+                d.define.end();
+
+                done();
             }, 250);
         }, 250);
     });

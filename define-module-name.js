@@ -3,7 +3,7 @@
     /** @global */
     var window = typeof exports === 'object' ? exports : this;
 
-    define.v = '1.7.0';
+    define.v = '1.8.0';
 
     window.define = define;
     window.require = require;
@@ -80,15 +80,6 @@
             pending: false,
             result: null
         };
-
-        if (pending[name]) {
-            pending[name].forEach(function (item) {
-                if (!item.called && specified(item.deps)) {
-                    require(item.deps, item.cb);
-                    item.called = true;
-                }
-            });
-        }
     }
 
     /**
@@ -205,6 +196,7 @@
             if (!has(pending, name)) continue;
             pending[name].forEach(function (item) {
                 if (!item.called) {
+                    item.called = true;
                     require(item.deps, item.cb);
                 }
             });
