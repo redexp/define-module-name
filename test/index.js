@@ -238,8 +238,16 @@ describe('define', function () {
     });
 
     it('should handle define after require', function (done) {
-        d.require(['test'], function (test) {
+        var num = 0;
+
+        d.require(['test', 'test2'], function (test, test2) {
+            num++;
+            if (num > 1) {
+                done(new Error('Called ' + num + ' times'));
+                return;
+            }
             expect(test).to.equal(1);
+            expect(test2).to.equal(2);
             done();
         });
 
@@ -247,7 +255,13 @@ describe('define', function () {
             d.define('test', [], function () {
                 return 1;
             });
-        }, 500);
+
+            setTimeout(function () {
+                d.define('test2', [], function () {
+                    return 2;
+                });
+            }, 250);
+        }, 250);
     });
 
     it('should handle cb as not function', function () {

@@ -1,5 +1,9 @@
 {
-  "dependencies": {},
+  "dependencies": {
+    "gulp": "3.*",
+    "gulp-uglify": "1.*",
+    "gulp-rename": "1.*"
+  },
   "devDependencies": {
     "chai": "^1.9.2",
     "mocha": "^2.0.1"

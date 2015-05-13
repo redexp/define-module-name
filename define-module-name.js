@@ -3,7 +3,7 @@
     /** @global */
     var window = typeof exports === 'object' ? exports : this;
 
-    define.version = '1.6.0';
+    define.v = '1.7.0';
 
     window.define = define;
     window.require = require;
@@ -14,7 +14,6 @@
 
     define.clear = clear;
     define.end = end;
-    define.timeout = 1000;
 
     require.config = function () {};
     require.specified = specified;
@@ -82,7 +81,14 @@
             result: null
         };
 
-        timeoutEnd();
+        if (pending[name]) {
+            pending[name].forEach(function (item) {
+                if (!item.called && specified(item.deps)) {
+                    require(item.deps, item.cb);
+                    item.called = true;
+                }
+            });
+        }
     }
 
     /**
@@ -103,12 +109,14 @@
         }
 
         if (!end.called && !specified(deps)) {
-            pending.push({
+            var pendingItem = {
                 cb: cb,
                 deps: deps
+            };
+            getUnspecified(deps).forEach(function (name) {
+                if (!pending[name]) pending[name] = [];
+                pending[name].push(pendingItem);
             });
-
-            timeoutEnd();
 
             return;
         }
@@ -172,9 +180,8 @@
     function clear() {
         modules = define.modules = {};
         names = define.names = [];
-        pending = define.pending = [];
+        pending = define.pending = {};
         end.called = false;
-        clearTimeout(timeoutEnd.timer);
     }
 
     function specified(names) {
@@ -185,21 +192,25 @@
         return names.every(specified);
     }
 
-    function end() {
-        clearTimeout(timeoutEnd.timer);
-
-        end.called = true;
-
-        pending.forEach(function (item) {
-            require(item.deps, item.cb);
+    function getUnspecified(names) {
+        return names.filter(function (name) {
+            return !specified(name);
         });
-
-        pending = [];
     }
 
-    function timeoutEnd() {
-        clearTimeout(timeoutEnd.timer);
-        timeoutEnd.timer = setTimeout(end, define.timeout);
+    function end() {
+        end.called = true;
+
+        for (var name in pending) {
+            if (!has(pending, name)) continue;
+            pending[name].forEach(function (item) {
+                if (!item.called) {
+                    require(item.deps, item.cb);
+                }
+            });
+        }
+
+        pending = {};
     }
 
     function has(obj, field) {
