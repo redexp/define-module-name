@@ -3,7 +3,7 @@
     /** @global */
     var window = typeof exports === 'object' ? exports : this;
 
-    define.v = '1.9.0';
+    define.v = '1.9.1';
 
     window.define = define;
     window.require = require;
@@ -180,7 +180,23 @@
     }
 
     function clear() {
-        modules = define.modules = {};
+        modules = define.modules = {
+            'require': {
+                called: true,
+                result: require,
+                deps: []
+            },
+            'exports': {
+                called: true,
+                result: null,
+                deps: []
+            },
+            'module': {
+                called: true,
+                result: null,
+                deps: []
+            }
+        };
         names = define.names = [];
         pending = define.pending = {};
         end.called = false;

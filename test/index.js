@@ -342,4 +342,27 @@ describe('define', function () {
         expect(d.require('test')).to.equal(x);
     });
 
+    it('should have prdefined modules', function () {
+        d.define('bb', ['test2', 'require', 'exports', 'module'], function (t, req, e, m) {
+            expect(req).to.equal(d.require);
+            expect(e).to.be.object;
+            expect(e).to.equal(m.exports);
+
+            return 1;
+        });
+
+        d.define('test2', [], function () {
+
+        });
+
+        d.define('test', ['bb'], function (req, e, m) {
+            return 1;
+        });
+
+        d.require(['test'], function (t) {
+            expect(t).to.equal(1);
+        });
+
+        d.define.end();
+    });
 });
