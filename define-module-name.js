@@ -3,7 +3,7 @@
     /** @global */
     var window = typeof exports === 'object' ? exports : this;
 
-    define.v = '1.8.0';
+    define.v = '1.9.0';
 
     window.define = define;
     window.require = require;
@@ -80,6 +80,14 @@
             pending: false,
             result: null
         };
+
+        if (pending[name]) {
+            pending[name].forEach(function (item) {
+                require(item.deps, item.cb);
+            });
+
+            delete pending[name];
+        }
     }
 
     /**
@@ -99,14 +107,12 @@
             }
         }
 
-        if (!end.called && !specified(deps)) {
-            var pendingItem = {
+        var name = getFirstDeepUnspecified(deps);
+        if (name) {
+            if (!pending[name]) pending[name] = [];
+            pending[name].push({
                 cb: cb,
                 deps: deps
-            };
-            getUnspecified(deps).forEach(function (name) {
-                if (!pending[name]) pending[name] = [];
-                pending[name].push(pendingItem);
             });
 
             return;
@@ -129,35 +135,40 @@
 
         var module = modules[name];
 
-        if (!module.called) {
-            if (module.pending) return;
-
-            module.pending = true;
-
-            var moduleExports = {exports: {}},
-                hasModuleExports = false;
-
-            var exportsIndex = module.deps.indexOf('exports');
-            if (exportsIndex > -1) {
-                hasModuleExports = true;
-                module.deps.splice(exportsIndex, 1, moduleExports.exports);
-            }
-
-            var moduleIndex = module.deps.indexOf('module');
-            if (moduleIndex > -1) {
-                hasModuleExports = true;
-                module.deps.splice(moduleIndex, 1, moduleExports);
-            }
-
-            var result = module.callback.apply(null, module.deps.map(moduleResult));
-
-            module.result = typeof result !== 'undefined' ? result : (hasModuleExports ? moduleExports.exports : result);
-
-            module.called = true;
-            module.pending = false;
+        if (module.called) {
+            return module.result;
         }
 
-        return modules[name].result;
+        if (module.pending) return;
+
+        module.pending = true;
+
+        var moduleExports = {exports: {}},
+            hasModuleExports = false;
+
+        var exportsIndex = module.deps.indexOf('exports');
+        if (exportsIndex > -1) {
+            hasModuleExports = true;
+            module.deps.splice(exportsIndex, 1, moduleExports.exports);
+        }
+
+        var moduleIndex = module.deps.indexOf('module');
+        if (moduleIndex > -1) {
+            hasModuleExports = true;
+            module.deps.splice(moduleIndex, 1, moduleExports);
+        }
+
+        var result = module.callback.apply(null, module.deps.map(moduleResult));
+
+        module.result = typeof result !== 'undefined' ? result : (hasModuleExports ? moduleExports.exports : result);
+
+        module.called = true;
+        module.pending = false;
+
+        module.deps = null;
+        module.callback = null;
+
+        return module.result;
     }
 
     function nextName(name) {
@@ -176,17 +187,36 @@
     }
 
     function specified(names) {
-        if (typeof names === 'string') {
-            return has(modules, names);
-        }
-
-        return names.every(specified);
+        return !unspecified(names);
     }
 
-    function getUnspecified(names) {
-        return names.filter(function (name) {
-            return !specified(name);
-        });
+    function unspecified(names) {
+        if (typeof names === 'string') {
+            return has(modules, names) ? false : names;
+        }
+
+        var name;
+        for (var i = 0, len = names.length; i < len; i++) {
+            name = names[i];
+            if (!has(modules, name)) return name;
+        }
+
+        return false;
+    }
+
+    function getFirstDeepUnspecified(names) {
+        var name = unspecified(names);
+        if (name) return name;
+
+        var module;
+        for (var i = 0, len = names.length; i < len; i++) {
+            module = modules[names[i]];
+            if (module.called) continue;
+            name = getFirstDeepUnspecified(module.deps);
+            if (name) return name;
+        }
+
+        return false;
     }
 
     function end() {
@@ -194,15 +224,8 @@
 
         for (var name in pending) {
             if (!has(pending, name)) continue;
-            pending[name].forEach(function (item) {
-                if (!item.called) {
-                    item.called = true;
-                    require(item.deps, item.cb);
-                }
-            });
+            throw new Error('Undefined module: ' + name);
         }
-
-        pending = {};
     }
 
     function has(obj, field) {

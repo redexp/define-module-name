@@ -21,7 +21,9 @@ describe('define', function () {
             expect(test).to.equal(1);
         });
 
-        d.require(['test']);
+        d.require(['test'], function () {
+
+        });
 
         expect(d.require('test')).to.equal(1);
 
@@ -237,50 +239,100 @@ describe('define', function () {
         }
     });
 
-    it('should handle define after require', function (done) {
-        var num = 0;
+    it('should handle define after require', function () {
+        var y1 = 0;
 
         d.require(['test', 'test2'], function (test, test2) {
-            num++;
-            if (num > 1) {
-                done(new Error('Called ' + num + ' times'));
+            y1++;
+            if (y1 > 1) {
+                done(new Error('Called ' + y1 + ' times'));
                 return;
             }
             expect(test).to.equal(1);
             expect(test2).to.equal(2);
         });
 
-        var y = 0;
+        var y2 = 0;
 
         d.require(['test', 'test2'], function (test, test2) {
-            y++;
-            if (y > 1) {
-                done(new Error('Called ' + y + ' times'));
-                return;
+            y2++;
+            if (y2 > 1) {
+                throw new Error('Called ' + y2 + ' times');
             }
             expect(test).to.equal(1);
             expect(test2).to.equal(2);
         });
 
-        setTimeout(function () {
-            d.define('test', ['sub-test'], function () {
-                return 1;
-            });
+        var y3 = 0;
 
-            setTimeout(function () {
-                d.define('test2', [], function () {
-                    return 2;
-                });
+        d.define('test', ['sub-test'], function () {
+            y3++;
+            if (y3 > 1) {
+                throw new Error('Called ' + y3 + ' times');
+            }
 
-                d.define('sub-test', [], function () {
-                    return 3;
-                });
+            return 1;
+        });
 
-                d.define.end();
+        var y4 = 0;
 
-                done();
-            }, 250);
-        }, 250);
+        d.define('sub-test', ['sub-sub-test'], function () {
+            y4++;
+            if (y4 > 1) {
+                throw new Error('Called ' + y4 + ' times');
+            }
+
+            return 1;
+        });
+
+        var y5 = 0;
+
+        d.define('test2', ['sub-test2'], function () {
+            y5++;
+            if (y5 > 1) {
+                throw new Error('Called ' + y5 + ' times');
+            }
+
+            return 2;
+        });
+
+        var y6 = 0;
+
+        d.define('sub-sub-test', [], function () {
+            y6++;
+            if (y6 > 1) {
+                throw new Error('Called ' + y6 + ' times');
+            }
+
+            return 1;
+        });
+
+        var y7 = 0;
+
+        d.define('sub-test2', [], function () {
+            y7++;
+            if (y7 > 1) {
+                throw new Error('Called ' + y7 + ' times');
+            }
+
+            return 1;
+        });
+
+        expect(y1 + y2 + y3 + y4 + y5 + y6 + y7).to.equal(7);
+    });
+
+    it('chould throw error if still pending', function () {
+        d.require(['test'], function () {
+
+        });
+
+        try {
+            d.define.end();
+            throw new Error('Should not be here');
+        }
+        catch (e) {
+            expect(e.message).to.equal('Undefined module: test');
+        }
     });
 
     it('should handle cb as not function', function () {
