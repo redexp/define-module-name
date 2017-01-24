@@ -25,8 +25,8 @@
     /**
      * @global
      * @param {String|Array|Function} name
-     * @param {Array|Function} deps
-     * @param {Function} cb
+     * @param {Array|Function} [deps]
+     * @param {Function} [cb]
      */
     function define(name, deps, cb) {
         if (arguments.length === 1) {
@@ -93,7 +93,7 @@
     /**
      * @global
      * @param {String|Array} deps
-     * @param {Function} cb
+     * @param {Function} [cb]
      */
     function require(deps, cb) {
         if (arguments.length === 1) {
