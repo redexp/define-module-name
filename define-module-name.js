@@ -3,7 +3,7 @@
     /** @global */
     var window = typeof exports === 'object' ? exports : this;
 
-    define.v = '1.9.1';
+    define.v = '1.9.3';
 
     window.define = define;
     window.require = require;
@@ -55,9 +55,19 @@
             }
         }
         else if (arguments.length === 2) {
-            cb = deps;
-            deps = name;
-            name = nextName();
+            if (typeof name === 'string' && typeof deps === 'function') {
+                cb = deps;
+                deps = [];
+
+                if (names.length > 0) {
+                    name = nextName();
+                }
+            }
+            else {
+                cb = deps;
+                deps = name;
+                name = nextName();
+            }
         }
         else if (names.length > 0) {
             name = nextName();
